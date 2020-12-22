@@ -1,0 +1,64 @@
+name: Build-Lean-lede
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/Build-Lean-lede.yml'
+      -  'lean-lede/mt7621/.config'
+  schedule:
+        - cron: 0 */4 * * *
+
+jobs:
+  MT7621:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+    - name: Prepare environment.
+      env:
+          DEBIAN_FRONTEND: noninteractive
+      run: |
+        bash ./lean-lede/prenv.sh
+        
+    - name: Clone Source
+      run: |
+        git clone --depth=1 https://github.com/coolsnowwolf/lede
+        
+    - name: Load custom configuration
+      run: |
+        cp lean-lede/mt7621/.config lede/.config
+        cd lede
+        bash ../lean-lede/diy.sh
+        make defconfig
+        
+    - name: Download package
+      run: |
+        cd lede
+        make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+        
+    - name: Multi-core or Single core compile
+      run: |
+        cd lede
+        echo -e "$(nproc) thread compile"
+        sudo df -h
+        make -j$(nproc) || make -j1 V=s
+        sudo df -h
+
+    - name: Setup Upload dictionary
+      if: always()
+      run: |
+        cd lede/bin
+        rm -rf packages
+        echo "FIRMWARE=$(pwd)" >> $GITHUB_ENV
+        
+    - name: Only Upload firmware (Without packages)
+      uses: actions/upload-artifact@master
+      if: always()
+      with:
+        name: mt7621
+        path: $FIRMWARE
