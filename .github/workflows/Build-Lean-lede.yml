@@ -29,6 +29,7 @@ jobs:
         
     - name: Load custom configuration
       run: |
+      	ls -alh
         cp lean-lede/mt7621/.config lede/.config
         cd lede
         bash ../lean-lede/diy.sh
