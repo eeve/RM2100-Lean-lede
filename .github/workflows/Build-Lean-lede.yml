@@ -58,4 +58,4 @@ jobs:
       if: always()
       with:
         name: mt7621
-        path: $FIRMWARE
+        path: "$FIRMWARE"
