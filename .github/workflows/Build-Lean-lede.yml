@@ -46,7 +46,7 @@ jobs:
         make -j$(nproc) || make -j1 V=s
         sudo df -h
 
-	- name: Setup Upload dictionary
+    - name: Setup Upload dictionary
       if: always()
       run: |
         cd lede/bin
